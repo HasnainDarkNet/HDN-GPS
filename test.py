@@ -1,32 +1,26 @@
 #!/usr/bin/env python3
 
-# ==========================================================
-# ██╗  ██╗ █████╗ ███████╗███╗   ██╗ █████╗ ██╗███╗   ██╗
-# ██║  ██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██║████╗  ██║
-# ███████║███████║███████╗██╔██╗ ██║███████║██║██╔██╗ ██║
-# ██╔══██║██╔══██║╚════██║██║╚██╗██║██╔══██║██║██║╚██╗██║
-# ██║  ██║██║  ██║███████║██║ ╚████║██║  ██║██║██║ ╚████║
-# ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
+# =====================================================
+#        ██╗  ██╗██████╗ ███╗   ██╗
+#        ██║  ██║██╔══██╗████╗  ██║
+#        ███████║██║  ██║██╔██╗ ██║
+#        ██╔══██║██║  ██║██║╚██╗██║
+#        ██║  ██║██████╔╝██║ ╚████║
+#        ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═══╝
 #
-#              HASNAIN DARK NET
-#         PROFESSIONAL METADATA TOOL
-# ==========================================================
+#      H A S N A I N   D A R K   N E T
+# ---------------------------------------------
+#        PROFESSIONAL METADATA TOOL
+# =====================================================
 
 import os
-import sys
 import time
+from PIL import Image
+from PIL.ExifTags import TAGS, GPSTAGS
 
-try:
-    from PIL import Image
-    from PIL.ExifTags import TAGS, GPSTAGS
-except ImportError:
-    print("\n[!] Pillow Library Not Installed!")
-    print("[+] Install Using: pip install pillow\n")
-    sys.exit()
-
-# ==========================================================
+# =====================================================
 # COLORS
-# ==========================================================
+# =====================================================
 
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -35,73 +29,80 @@ CYAN = "\033[96m"
 WHITE = "\033[97m"
 RESET = "\033[0m"
 
-# Windows Color Fix
-if os.name == "nt":
-    os.system("")
-
-# ==========================================================
-# CLEAR SCREEN
-# ==========================================================
-
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
-
-# ==========================================================
+# =====================================================
 # BANNER
-# ==========================================================
+# =====================================================
 
 def banner():
-    clear()
+    os.system("cls" if os.name == "nt" else "clear")
 
     print(f"""{RED}
-
 ██╗  ██╗ █████╗ ███████╗███╗   ██╗ █████╗ ██╗███╗   ██╗
 ██║  ██║██╔══██╗██╔════╝████╗  ██║██╔══██╗██║████╗  ██║
 ███████║███████║███████╗██╔██╗ ██║███████║██║██╔██╗ ██║
 ██╔══██║██╔══██║╚════██║██║╚██╗██║██╔══██║██║██║╚██╗██║
 ██║  ██║██║  ██║███████║██║ ╚████║██║  ██║██║██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
-
-{CYAN}==========================================================
-              HASNAIN DARK NET
-         PROFESSIONAL METADATA TOOL
-=========================================================={RESET}
+{RESET}
 """)
 
-# ==========================================================
+    print(f"{CYAN}{'='*65}")
+    print(f"        🔒 HASNAIN DARK NET TOOL")
+    print(f"        📡 PROFESSIONAL METADATA ANALYZER")
+    print(f"{'='*65}{RESET}\n")
+
+# =====================================================
+# FIX PATH (ALL OS SUPPORT)
+# =====================================================
+
+def fix_path(path):
+    path = path.strip().replace('"', '').replace("'", "")
+
+    # Windows → Linux/WSL
+    if ":" in path and "\\" in path:
+        drive = path[0].lower()
+        path = path.replace(f"{path[0]}:\\", f"/mnt/{drive}/")
+        path = path.replace("\\", "/")
+
+    return path
+
+# =====================================================
 # GPS CONVERTER
-# ==========================================================
+# =====================================================
 
 def convert_to_degrees(value):
-
     try:
         d = float(value[0])
         m = float(value[1])
         s = float(value[2])
-
         return d + (m / 60.0) + (s / 3600.0)
-
     except:
         return None
 
-# ==========================================================
-# GPS EXTRACTION
-# ==========================================================
+# =====================================================
+# SAFE GPS PARSER
+# =====================================================
 
-def extract_gps(gps_info):
+def extract_gps_info(gps_info):
+
+    if not isinstance(gps_info, dict):
+        return None, None
 
     gps_data = {}
 
-    for key in gps_info.keys():
-        decoded = GPSTAGS.get(key, key)
-        gps_data[decoded] = gps_info[key]
+    for key in gps_info:
+        decode = GPSTAGS.get(key, key)
+        gps_data[decode] = gps_info[key]
 
     try:
-        lat = convert_to_degrees(gps_data["GPSLatitude"])
-        lat_ref = gps_data["GPSLatitudeRef"]
+        lat = convert_to_degrees(gps_data.get("GPSLatitude"))
+        lat_ref = gps_data.get("GPSLatitudeRef")
 
-        lon = convert_to_degrees(gps_data["GPSLongitude"])
-        lon_ref = gps_data["GPSLongitudeRef"]
+        lon = convert_to_degrees(gps_data.get("GPSLongitude"))
+        lon_ref = gps_data.get("GPSLongitudeRef")
+
+        if lat is None or lon is None:
+            return None, None
 
         if lat_ref != "N":
             lat = -lat
@@ -114,113 +115,100 @@ def extract_gps(gps_info):
     except:
         return None, None
 
-# ==========================================================
+# =====================================================
 # METADATA EXTRACTOR
-# ==========================================================
+# =====================================================
 
 def extract_metadata(image_path):
 
-    if not os.path.isfile(image_path):
-        print(f"{RED}[!] Invalid File Path!{RESET}")
+    image_path = fix_path(image_path)
+
+    if not os.path.exists(image_path):
+        print(f"{RED}[!] File Not Found!{RESET}")
         return
 
     try:
-
         image = Image.open(image_path)
 
-        print(f"\n{GREEN}[+] Scanning Image Metadata...{RESET}")
-        time.sleep(1)
+        print(f"{GREEN}[+] Loading Image Metadata...{RESET}")
+        time.sleep(0.5)
 
+        # ---------------- BASIC INFO ----------------
         print(f"""
-{CYAN}==========================================================
-                    BASIC INFORMATION
-=========================================================={RESET}
+{CYAN}
+╔════════════════════════════════════╗
+║        📌 BASIC INFORMATION        ║
+╚════════════════════════════════════╝
+{RESET}
 """)
 
-        print(f"{YELLOW}File Name      : {WHITE}{os.path.basename(image_path)}")
-        print(f"{YELLOW}File Path      : {WHITE}{os.path.abspath(image_path)}")
-        print(f"{YELLOW}Format         : {WHITE}{image.format}")
-        print(f"{YELLOW}Mode           : {WHITE}{image.mode}")
-        print(f"{YELLOW}Resolution     : {WHITE}{image.size[0]} x {image.size[1]}")
+        print(f"{YELLOW}File Name     : {WHITE}{os.path.basename(image_path)}")
+        print(f"{YELLOW}Format        : {WHITE}{image.format}")
+        print(f"{YELLOW}Mode          : {WHITE}{image.mode}")
+        print(f"{YELLOW}Resolution    : {WHITE}{image.size}")
+        print(f"{YELLOW}File Size     : {WHITE}{os.path.getsize(image_path)/1024:.2f} KB")
 
-        size = os.path.getsize(image_path) / 1024
-        print(f"{YELLOW}File Size      : {WHITE}{size:.2f} KB")
+        exif = image._getexif()
 
-        exif_data = image.getexif()
-
-        if not exif_data:
-            print(f"\n{RED}[!] No EXIF Metadata Found!{RESET}")
+        if not exif:
+            print(f"{RED}[!] No EXIF Data Found!{RESET}")
             return
 
+        # ---------------- EXIF INFO ----------------
         print(f"""
-{CYAN}==========================================================
-                      EXIF METADATA
-=========================================================={RESET}
+{CYAN}
+╔════════════════════════════════════╗
+║          📷 EXIF METADATA          ║
+╚════════════════════════════════════╝
+{RESET}
 """)
 
         gps_info = None
 
-        for tag_id in exif_data:
-
-            value = exif_data.get(tag_id)
+        for tag_id, value in exif.items():
             tag = TAGS.get(tag_id, tag_id)
 
             if tag == "GPSInfo":
                 gps_info = value
                 continue
 
-            try:
-                print(f"{GREEN}{tag:<25}:{WHITE} {value}")
-            except:
-                pass
+            print(f"{GREEN}{tag:<20}:{WHITE} {value}")
 
-        # GPS
-        if gps_info:
-
-            print(f"""
-{CYAN}==========================================================
-                     GPS INFORMATION
-=========================================================={RESET}
+        # ---------------- GPS INFO ----------------
+        print(f"""
+{CYAN}
+╔════════════════════════════════════╗
+║        🌍 GPS INFORMATION          ║
+╚════════════════════════════════════╝
+{RESET}
 """)
 
-            latitude, longitude = extract_gps(gps_info)
+        lat, lon = extract_gps_info(gps_info)
 
-            if latitude and longitude:
-
-                print(f"{GREEN}Latitude        : {WHITE}{latitude}")
-                print(f"{GREEN}Longitude       : {WHITE}{longitude}")
-
-                maps = f"https://www.google.com/maps?q={latitude},{longitude}"
-
-                print(f"{GREEN}Google Maps     : {WHITE}{maps}")
-
-            else:
-                print(f"{RED}[!] Unable To Decode GPS Data!{RESET}")
-
+        if lat and lon:
+            print(f"{GREEN}Latitude      : {WHITE}{lat}")
+            print(f"{GREEN}Longitude     : {WHITE}{lon}")
+            print(f"{GREEN}Google Maps   : {WHITE}https://www.google.com/maps?q={lat},{lon}")
         else:
-            print(f"\n{RED}[!] No GPS Metadata Found!{RESET}")
+            print(f"{RED}[!] No Valid GPS Data Found{RESET}")
 
     except Exception as e:
-        print(f"\n{RED}[ERROR] {e}{RESET}")
+        print(f"{RED}[ERROR] {e}{RESET}")
 
-# ==========================================================
+# =====================================================
 # MAIN
-# ==========================================================
+# =====================================================
 
-def main():
+if __name__ == "__main__":
 
     banner()
 
-    path = input(f"{CYAN}[?] Enter Image Path : {WHITE}").strip()
+    image_path = input(f"""
+{CYAN}┌────────────────────────────────────────────┐
+│  📁 Enter Image Path                       │
+└────────────────────────────────────────────┘
+{WHITE}➤ """)
 
-    if path.startswith('"') and path.endswith('"'):
-        path = path[1:-1]
-
-    extract_metadata(path)
+    extract_metadata(image_path)
 
     print(f"\n{GREEN}[✓] Scan Completed Successfully!{RESET}\n")
-
-# ==========================================================
-
-if __name__ == "__main__":
-    main()
